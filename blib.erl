@@ -2,14 +2,23 @@
 -compile(export_all).
 
 start() ->
-  spawn(fun list_loop/0).
+  case whereis(list_server) of
+    undefined -> 
+      io:format("Starting server\n"),
+      register(list_server, spawn(fun list_loop/0));
+    Pid -> io:format("list_server has been started at ~p\n", [Pid])
+  end.
 
 rpc(Pid, Request) ->
   Pid ! {self(), Request},
   receive
     {Pid, Response} ->
       Response
+  after 20 ->
+      io:format("Timeout")
   end.
+
+
 
 make_list(N) -> make_list(N, []).
 make_list(0, L) -> L;
@@ -29,7 +38,13 @@ list_loop() ->
       io:format("Made list of ~p elements : ~p\n",[N,L]), 
       From ! {self(), {list, L}},
       list_loop();
+    die ->
+      io:format("Goodbye\n");
+    {From, Other} -> 
+      io:format("\"~p\" from ~p - What?\n", [Other, From]),
+      From ! {self(), ok},
+      list_loop();
     Other -> 
-      io:format("What?\n"),
+      io:format("Send messages in the format {self(), Request}"),
       list_loop()
   end.
