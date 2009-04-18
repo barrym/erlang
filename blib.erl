@@ -48,3 +48,15 @@ list_loop() ->
       io:format("Send messages in the format {self(), Request}"),
       list_loop()
   end.
+
+ruby() ->
+  Cmd = "ruby foo.rb",
+  Port = open_port({spawn, Cmd}, [{packet, 4}, use_stdio, exit_status, binary]),
+  Payload = term_to_binary({echo, <<"hello world!">>}),
+  port_command(Port, Payload),
+  receive
+    {Port, {data, Data}} ->
+      {result, Text} = binary_to_term(Data),
+      io:format("~p~n", [Text])
+  end.
+
