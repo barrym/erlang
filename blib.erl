@@ -18,11 +18,13 @@ rpc(Pid, Request) ->
       io:format("Timeout")
   end.
 
-make_list(N) -> make_list(N,1,[]).
-make_list(N,Step) -> make_list(trunc(N/Step) * Step, Step,[]).
+% this is the same as lists:seq(Start, End, Step)
+make_list(N) -> make_list(N,1,1,[]).
+make_list(N,Step) -> make_list(trunc(N/Step) * Step, Step, 1, []).
+make_list(Start, End, Step) -> make_list(trunc((End - Start)/Step) * Step + Start, Step, Start, []).
 
-make_list(Current, _Step, L) when Current =< 0 -> L;
-make_list(Current, Step, L) -> make_list(Current - Step, Step, [Current|L]).
+make_list(Current, _Step, Start, L) when Current < Start -> L;
+make_list(Current, Step, Start, L) -> make_list(Current - Step, Step, Start, [Current|L]).
 
 
 %make_list(N) -> make_list(N, []).
