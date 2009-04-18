@@ -18,11 +18,16 @@ rpc(Pid, Request) ->
       io:format("Timeout")
   end.
 
+make_list(N) -> make_list(N,1,[]).
+make_list(N,Step) -> make_list(trunc(N/Step) * Step, Step,[]).
+
+make_list(Current, _Step, L) when Current =< 0 -> L;
+make_list(Current, Step, L) -> make_list(Current - Step, Step, [Current|L]).
 
 
-make_list(N) -> make_list(N, []).
-make_list(0, L) -> L;
-make_list(N, L) -> make_list(N - 1, [N|L]).
+%make_list(N) -> make_list(N, []).
+%make_list(0, L) -> L;
+%make_list(N, L) -> make_list(N - 1, [N|L]).
 
 sum_list([H|T]) -> H + sum_list(T);
 sum_list([]) -> 0.
