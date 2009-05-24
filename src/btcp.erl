@@ -29,18 +29,19 @@ accept_connection(ListeningSocket) ->
 
 responder_loop(Socket) ->
   case gen_tcp:recv(Socket, 0) of
-    {ok, "kill\r\n"} ->
+    {ok, "KILL\r\n"} ->
       gen_tcp:send(Socket, "Exiting\r\n"),
       gen_tcp:close(Socket),
+      io:format("Bye~n"),
       init:stop();
     {ok, "ADD " ++ Data} ->
       Data1 = lists:flatten(string:tokens(Data, "\r\n")),
       io:format("Adding ~p~n", [Data1]),
       bqueue_server ! {self(), {add, Data1}},
       receive
-        {ok, NewQueue} ->
+        {ok, _NewQueue} ->
           gen_tcp:send(Socket, "OK\r\n");
-        Other ->
+        _Other ->
           gen_tcp:send(Socket, "Error\r\n")
       end,
       responder_loop(Socket);
@@ -52,7 +53,18 @@ responder_loop(Socket) ->
           gen_tcp:send(Socket, "\r\n");
         {empty} ->
           gen_tcp:send(Socket, "EMPTY\r\n");
-        Other ->
+        _Other ->
+          gen_tcp:send(Socket, "Error\r\n")
+      end,
+      responder_loop(Socket);
+    {ok, "STATS\r\n"} ->
+      bqueue_server ! {self(), stats},
+      receive
+        {ok, Stats} ->
+          {jobs, Jobs} = Stats,
+          gen_tcp:send(Socket, integer_to_list(Jobs)),
+          gen_tcp:send(Socket, "\r\n");
+        _Other -> 
           gen_tcp:send(Socket, "Error\r\n")
       end,
       responder_loop(Socket);

@@ -24,6 +24,11 @@ loop(Queue) ->
     {From, die} ->
       From ! {bye},
       io:format("Exiting~n");
+    {From, stats} ->
+      Response = {ok, {jobs, length(Queue)}},
+      io:format("Stats: ~p~n", [Response]),
+      From ! Response,
+      loop(Queue);
     Other ->
       io:format("Huh?~n"),
       loop(Queue)

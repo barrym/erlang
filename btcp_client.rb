@@ -19,8 +19,13 @@ module BTCP
       get_reply
     end
 
+    def stats
+      send("STATS")
+      get_reply
+    end
+
     def kill
-      send("kill")
+      send("KILL")
       get_reply
     end
 
