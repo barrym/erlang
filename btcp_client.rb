@@ -10,23 +10,32 @@ module BTCP
     end
 
     def add(data)
-      @client.send("ADD #{data}\r\n", 0)
-      get_reply
+      send("ADD #{data}")
+      get_reply == "OK"
     end
 
     def reserve
-      @client.send("RESERVE\r\n", 0)
+      send("RESERVE")
+      get_reply
+    end
+
+    def kill
+      send("kill")
       get_reply
     end
 
     private
+
+    def send(command)
+      @client.send("#{command}\r\n", 0)
+    end
 
     def get_reply
       reply = nil
       timeout(5) do
         reply = @client.gets
       end
-      reply
+      reply.chomp
     end
 
   end
