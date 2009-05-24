@@ -13,7 +13,8 @@ loop(Queue) ->
       From ! {ok, NewQueue},
       loop(NewQueue);
     {From, reserve} when Queue =:= [] ->
-      io:format("queue empty"),
+      From ! {empty},
+      io:format("queue empty~n"),
       loop([]);
     {From, reserve} ->
       [H|T] = lists:reverse(Queue),

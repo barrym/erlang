@@ -50,6 +50,8 @@ responder_loop(Socket) ->
         {ok, Job} ->
           gen_tcp:send(Socket, Job),
           gen_tcp:send(Socket, "\r\n");
+        {empty} ->
+          gen_tcp:send(Socket, "EMPTY\r\n");
         Other ->
           gen_tcp:send(Socket, "Error\r\n")
       end,
