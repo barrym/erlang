@@ -1,4 +1,4 @@
--module(btcp).
+-module(btcp_v1).
 -compile(export_all).
 
 -define(LISTEN_PORT, 11300).
