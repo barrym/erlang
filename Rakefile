@@ -24,9 +24,8 @@ namespace :btcp do
   end
 end
 
-namespace :test do
-  desc "Run the dateutils tests"
-  task :dateutils => :compile do
-    sh "erl -pa ebin -s date_utils test -s init stop"
-  end
+desc "Run all tests" 
+task :test => :compile do
+  modules = FileList['src/**/*.erl'].exclude(/_tests.erl$/).map {|file| File.basename(file, ".erl")}
+  sh "erl -noshell -pa ebin -eval 'eunit:test([#{modules.join(",")}], [verbose])' -s init stop"
 end

@@ -1,7 +1,6 @@
 -module(date_utils).
 -compile(export_all).
 % -export([timestamp/0, timestamp/1, timestamp_to_datetime/1]).
--include_lib("eunit/include/eunit.hrl").
 
 % These all use localtime
 
