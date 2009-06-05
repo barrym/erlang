@@ -24,3 +24,9 @@ namespace :btcp do
   end
 end
 
+namespace :test do
+  desc "Run the dateutils tests"
+  task :dateutils => :compile do
+    sh "erl -pa ebin -s date_utils test -s init stop"
+  end
+end
