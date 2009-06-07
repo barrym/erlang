@@ -43,6 +43,32 @@ all_jobs() ->
   do(Q).
 
 
+auto_increment() ->
+  case whereis(incrementer) of
+    undefined ->
+      register(incrementer, spawn(fun() -> auto_increment(1) end));
+    _ -> 
+      true
+  end,
+  incrementer ! {self(), get},
+  receive
+    {ok, Num} ->
+      Num;
+    _ ->
+      io:format("error~n")
+  end.
+
+
+auto_increment(Next) ->
+  receive
+    {From, get} ->
+      From ! {ok, Next},
+      auto_increment(Next+1);
+    die ->
+      io:format("Dying~n")
+  end.
+
+
 
 
 do(Query) ->
@@ -57,7 +83,8 @@ delete_table() ->
   mnesia:delete_table(job).
 
 create_table() ->
-  mnesia:create_table(job, [{type, ordered_set},{attributes, record_info(fields, job)}]).
+  mnesia:create_table(job, [{type, ordered_set},{attributes, record_info(fields, job)}]),
+  mnesia:add_table_index(job, priority).
 
 reset() ->
   delete_table(),
