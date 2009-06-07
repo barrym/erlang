@@ -3,6 +3,7 @@
 
 start(ServerName) ->
   register(ServerName, spawn(fun() -> loop([]) end)),
+  % global:register_name(ServerName, spawn(fun() -> loop([]) end)),
   io:format("bqueue server started, registered name :~p~n", [ServerName]).
 
 loop(Queue) ->
@@ -30,7 +31,7 @@ loop(Queue) ->
       From ! Response,
       loop(Queue);
     Other ->
-      io:format("Huh?~n"),
+      io:format("Huh? Don't understand ~p~n", [Other]),
       loop(Queue)
   end.
 
