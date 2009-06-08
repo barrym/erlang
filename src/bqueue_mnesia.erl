@@ -29,13 +29,14 @@ get_job() ->
   get_job("default").
 
 get_job(QueueName) ->
-  Q1 = qlc:q([ X || X <- mnesia:table(job) ]),
-  Q2 = qlc:sort(Q1, {order, fun(Job1, Job2) -> Job1#job.priority < Job2#job.priority end}),
-  H = do(Q2),
-  C = qlc:cursor(H),
-  R = qlc:next_answers(C,1),
-  qlc:delete_cursor(C),
-  R.
+  mnesia:transaction(fun() -> 
+        Q1 = qlc:q([ X || X <- mnesia:table(job),
+        Q2 = qlc:sort(Q1, {order, fun(Job1, Job2) -> Job1#job.priority > Job2#job.priority end}),
+        C = qlc:cursor(Q2),
+        R = qlc:next_answers(C,1),
+        qlc:delete_cursor(C),
+        R
+    end).
 
 
 all_jobs() ->
@@ -84,7 +85,6 @@ delete_table() ->
 
 create_table() ->
   mnesia:create_table(job, [{type, ordered_set},{attributes, record_info(fields, job)}]),
-  mnesia:add_table_index(job, priority).
 
 reset() ->
   delete_table(),
