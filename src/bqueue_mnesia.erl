@@ -3,7 +3,7 @@
 
 -include_lib("stdlib/include/qlc.hrl").
 
--record(job, { id, queue = default, body, due = 0, priority = 3000 }).
+-record(job, { id, queue = default, body, due = 0, priority = 1 }).
 
 % Eshell V5.7.1  (abort with ^G)
 % 1> rr('src/bqueue_mnesia').
@@ -20,8 +20,12 @@ start() ->
   io:format("Ready~n").
 
 add_job(Body, Priority) ->
-  Job = #job{ id = {now(), node()}, body = Body, priority = Priority},
-  F = fun() -> mnesia:write(Job) end,
+  Id = {now(), node()},
+  Job = #job{ id = Id, body = Body, priority = Priority },
+  F = fun() -> 
+      % io:format("adding ~p~n",[Job]),
+      mnesia:write(Job)
+  end,
   Result = mnesia:transaction(F),
   Result.
 
@@ -30,7 +34,7 @@ get_job() ->
 
 get_job(QueueName) ->
   mnesia:transaction(fun() -> 
-        Q1 = qlc:q([ X || X <- mnesia:table(job),
+        Q1 = qlc:q([ X || X <- mnesia:table(job)]),
         Q2 = qlc:sort(Q1, {order, fun(Job1, Job2) -> Job1#job.priority > Job2#job.priority end}),
         C = qlc:cursor(Q2),
         R = qlc:next_answers(C,1),
@@ -84,7 +88,7 @@ delete_table() ->
   mnesia:delete_table(job).
 
 create_table() ->
-  mnesia:create_table(job, [{type, ordered_set},{attributes, record_info(fields, job)}]),
+  mnesia:create_table(job, [{type, ordered_set},{disc_copies, [node()]},{attributes, record_info(fields, job)}]).
 
 reset() ->
   delete_table(),
