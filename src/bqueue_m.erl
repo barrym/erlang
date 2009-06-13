@@ -7,10 +7,7 @@
 	 terminate/2, code_change/3]).
 
 -include_lib("stdlib/include/qlc.hrl").
-
--record(job, { id, body, queue }).
--record(queue, { name, current_jobs = 0 } ).
-
+-include_lib("src/bqueue_m.hrl").
 
 start_link() -> gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
@@ -89,7 +86,6 @@ register_queue(QueueName) ->
   F = fun() ->
       case mnesia:read({queue, QueueName}) of
         [{queue, QueueName, Count}] ->
-          io:format("qq~n"),
           mnesia:write(#queue{name = QueueName, current_jobs = Count + 1});
         [] ->
           mnesia:write(#queue{name = QueueName, current_jobs = 1})
@@ -141,4 +137,3 @@ grab(Amount, QueueName) ->
         grab(Amount - 1, QueueName)
     end
   end.
-

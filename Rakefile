@@ -24,6 +24,13 @@ namespace :btcp do
   end
 end
 
+namespace :bmtcp do
+  desc "Starts bmtcp server"
+  task :start do
+    sh "erl -pa ebin -run bqueue_mtcp start -noshell"
+  end
+end
+
 desc "Run all tests" 
 task :test => :compile do
   modules = FileList['src/**/*.erl'].exclude(/_tests.erl$/).map {|file| File.basename(file, ".erl")}

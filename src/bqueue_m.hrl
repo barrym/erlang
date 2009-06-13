@@ -1,0 +1,2 @@
+-record(job, { id, body, queue }).
+-record(queue, { name, current_jobs = 0 } ).
