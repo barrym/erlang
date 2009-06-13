@@ -54,7 +54,7 @@ add_job(Body, Priority, Delay, QueueName) ->
   Id = {Priority, date_utils:timestamp() + Delay, {now(), node()}},
   Job = #job{id = Id, body = Body, queue = QueueName},
   F = fun() ->
-      register_queue(QueueName),
+      increment_queue(QueueName),
       mnesia:write(Job)
   end,
   Result = mnesia:transaction(F),
@@ -72,6 +72,7 @@ get_job(QueueName) ->
         {[Key], _} -> 
           Job = mnesia:read(job, Key),
           mnesia:delete({job, Key}),
+          decrement_queue(QueueName),
           Job;
         '$end_of_table' ->
           empty;
@@ -82,13 +83,28 @@ get_job(QueueName) ->
   {atomic, Response} = mnesia:transaction(F),
   Response.
 
-register_queue(QueueName) ->
+increment_queue(QueueName) ->
   F = fun() ->
       case mnesia:read({queue, QueueName}) of
         [{queue, QueueName, Count}] ->
           mnesia:write(#queue{name = QueueName, current_jobs = Count + 1});
         [] ->
           mnesia:write(#queue{name = QueueName, current_jobs = 1})
+      end,
+      queues()
+  end,
+  {atomic, Result} = mnesia:transaction(F),
+  Result.
+
+decrement_queue(QueueName) ->
+  F = fun() ->
+      case mnesia:read({queue, QueueName}) of
+        [{queue, QueueName, Count}] when Count > 1 ->
+          mnesia:write(#queue{name = QueueName, current_jobs = Count - 1});
+        [{queue, QueueName, Count}] when Count =:= 1 ->
+          unregister_queue(QueueName);
+        [] ->
+          io:format("~p does not exist~n", [QueueName])
       end,
       queues()
   end,

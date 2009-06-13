@@ -27,7 +27,8 @@ end
 namespace :bmtcp do
   desc "Starts bmtcp server"
   task :start do
-    sh "erl -pa ebin -run bqueue_mtcp start -noshell"
+    # sh "erl -pa ebin -run bqueue_mtcp start -noshell"
+    sh "erl -pa ebin -run bqueue_mtcp start"
   end
 end
 

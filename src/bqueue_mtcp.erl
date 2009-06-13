@@ -60,7 +60,7 @@ responder_loop(Socket) ->
       case bqueue_m:stats() of
         {ok, Stats} ->
           io:format("stats : ~p~n",[Stats]),
-          gen_tcp:send(Socket, "Job goes here"),
+          gen_tcp:send(Socket, "Stats goes here"),
           gen_tcp:send(Socket, "\r\n");
         _Other -> 
           gen_tcp:send(Socket, "Error\r\n")
