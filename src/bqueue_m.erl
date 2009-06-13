@@ -9,6 +9,7 @@
 -include_lib("stdlib/include/qlc.hrl").
 
 -record(job, { id, body, queue }).
+-record(queue, { name, current_jobs = 0 } ).
 
 
 start_link() -> gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
@@ -21,7 +22,11 @@ stats() -> gen_server:call(?MODULE, stats).
 kill() -> gen_server:call(?MODULE, kill).
 
 % Server
-init([]) -> {ok, []}.
+init([]) -> 
+    ok = mnesia:start(),
+    ok = mnesia:wait_for_tables([job,queue], 5000),
+    io:format("Started~n"),
+    {ok, []}.
 
 handle_call({add, {Body, Priority, Delay, QueueName}}, _From, State) -> 
   add_job(Body, Priority, Delay, QueueName),
@@ -35,7 +40,9 @@ handle_call(all, _From, State) ->
   Reply = {ok, all_jobs()},
   {reply, Reply, State};
 handle_call(stats, _From, State) ->
-  Reply = {ok, [{total_jobs, mnesia:table_info(job, size)}]},
+  TotalJobs = mnesia:table_info(job, size),
+  QueueStats = utils:mnesia_do(qlc:q([{X#queue.name, {current_jobs, X#queue.current_jobs}} || X <- mnesia:table(queue)])),
+  Reply = {ok, [{total_jobs, TotalJobs, QueueStats}]},
   {reply, Reply, State};
 handle_call(stop, _From, State) ->
   {stop, normal, stopped, State}.
@@ -46,15 +53,11 @@ terminate(_Reason, _State) -> ok.
 code_change(_OldVsn, State, Extra) -> {ok, State}.
 
 % Internal
-start() ->
-  ok = mnesia:start(),
-  ok = mnesia:wait_for_tables([job], 5000),
-  io:format("Started~n").
-
 add_job(Body, Priority, Delay, QueueName) ->
   Id = {Priority, date_utils:timestamp() + Delay, {now(), node()}},
   Job = #job{id = Id, body = Body, queue = QueueName},
   F = fun() ->
+      register_queue(QueueName),
       mnesia:write(Job)
   end,
   Result = mnesia:transaction(F),
@@ -82,11 +85,39 @@ get_job(QueueName) ->
   {atomic, Response} = mnesia:transaction(F),
   Response.
 
+register_queue(QueueName) ->
+  F = fun() ->
+      case mnesia:read({queue, QueueName}) of
+        [{queue, QueueName, Count}] ->
+          io:format("qq~n"),
+          mnesia:write(#queue{name = QueueName, current_jobs = Count + 1});
+        [] ->
+          mnesia:write(#queue{name = QueueName, current_jobs = 1})
+      end,
+      queues()
+  end,
+  {atomic, Result} = mnesia:transaction(F),
+  Result.
+
+unregister_queue(QueueName) ->
+  F = fun() ->
+      mnesia:delete({queue, QueueName}),
+      queues()
+  end,
+  {atomic, Result} = mnesia:transaction(F),
+  Result.
+
+queues() ->
+  utils:mnesia_do(qlc:q([X#queue.name || X <- mnesia:table(queue)])).
+
+
 
 bootstrap() ->
   mnesia:start(),
   mnesia:delete_table(job),
-  mnesia:create_table(job, [{type, ordered_set}, {disc_copies, [node()]}, {attributes, record_info(fields, job)}]).
+  mnesia:delete_table(queue),
+  mnesia:create_table(job, [{type, ordered_set}, {disc_copies, [node()]}, {attributes, record_info(fields, job)}]),
+  mnesia:create_table(queue, [{type, ordered_set}, {disc_copies, [node()]}, {attributes, record_info(fields, queue)}]).
 
 fill(Amount) ->
   fill(Amount, "default").
