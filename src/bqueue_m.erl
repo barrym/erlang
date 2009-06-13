@@ -1,9 +1,39 @@
 -module(bqueue_m).
--compile(export_all).
+-behaviour(gen_server).
+-export([start_link/0]).
+-export([put/4, get/1]).
+-export([init/1, handle_call/3, handle_cast/2, handle_info/2,
+	 terminate/2, code_change/3]).
+
 -include_lib("stdlib/include/qlc.hrl").
 
 -record(job, { id, body, queue }).
 
+
+start_link() -> gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
+
+% Client
+put(Body, Priority, Delay, QueueName) -> gen_server:call(?MODULE, {add, {Body, Priority, Delay, QueueName}}).
+get(QueueName) -> gen_server:call(?MODULE, {get, QueueName}).
+
+% Server
+init([]) -> {ok, []}.
+
+handle_call({add, {Body, Priority, Delay, QueueName}}, _From, State) -> 
+  add_job(Body, Priority, Delay, QueueName),
+  Reply = ok,
+  {reply, Reply, State};
+handle_call({get, QueueName}, _From, State) -> 
+  Job = get_job(QueueName),
+  Reply = {ok, Job},
+  {reply, Reply, State}.
+
+handle_cast(_Msg, State) -> {noreply, State}.
+handle_info(_Info, State) -> {noreply, State}.
+terminate(_Reason, _State) -> ok.
+code_change(_OldVsn, State, Extra) -> {ok, State}.
+
+% Internal
 start() ->
   ok = mnesia:start(),
   ok = mnesia:wait_for_tables([job], 5000),
