@@ -1,4 +1,4 @@
--module(bqueue_mnesia).
+-module(bqueue_mnesia_old).
 -compile(export_all).
 
 -include_lib("stdlib/include/qlc.hrl").
