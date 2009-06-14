@@ -9,14 +9,14 @@
 -include_lib("stdlib/include/qlc.hrl").
 -include_lib("src/bqueue_m.hrl").
 
-start_link() -> gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
+start_link() -> gen_server:start_link({global, ?MODULE}, ?MODULE, [], []).
 
 % Client
-put(Body, Priority, Delay, QueueName) -> gen_server:call(?MODULE, {add, {Body, Priority, Delay, QueueName}}).
-get(QueueName) -> gen_server:call(?MODULE, {get, QueueName}).
-all() -> gen_server:call(?MODULE, all).
-stats() -> gen_server:call(?MODULE, stats).
-kill() -> gen_server:call(?MODULE, stop).
+put(Body, Priority, Delay, QueueName) -> gen_server:call({global, ?MODULE}, {add, {Body, Priority, Delay, QueueName}}).
+get(QueueName) -> gen_server:call({global, ?MODULE}, {get, QueueName}).
+all() -> gen_server:call({global, ?MODULE}, all).
+stats() -> gen_server:call({global, ?MODULE}, stats).
+kill() -> gen_server:call({global, ?MODULE}, stop).
 
 % Server
 init([]) -> 
