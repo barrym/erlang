@@ -13,7 +13,6 @@ threads = []
     started = Time.now
     amount.times do |n|
       client.add(n)
-      sleep 0.3
     end
     ended = Time.now
     taken = ended - started
@@ -27,7 +26,6 @@ end
     started = Time.now
     amount.times do |n|
       client.reserve
-      sleep 0.3
     end
     ended = Time.now
     taken = ended - started

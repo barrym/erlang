@@ -16,7 +16,7 @@ put(Body, Priority, Delay, QueueName) -> gen_server:call(?MODULE, {add, {Body, P
 get(QueueName) -> gen_server:call(?MODULE, {get, QueueName}).
 all() -> gen_server:call(?MODULE, all).
 stats() -> gen_server:call(?MODULE, stats).
-kill() -> gen_server:call(?MODULE, kill).
+kill() -> gen_server:call(?MODULE, stop).
 
 % Server
 init([]) -> 
