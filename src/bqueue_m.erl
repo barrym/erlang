@@ -65,10 +65,10 @@ all_jobs() ->
 
 get_job(QueueName) ->
   F = fun() ->
-      MatchHead = #job{id='$1', body='_', queue='$2'},
-      Guard = {'=:=','$2',QueueName},
-      Result = '$1',
-      case mnesia:select(job, [{MatchHead, [Guard], [Result]}],1,read) of
+      MatchHead = #job{id={'$1','$2','$3'}, body='_', queue='$5'},
+      Guards = [{'=:=','$5',QueueName}, {'<', '$2', date_utils:timestamp()}],
+      Result = {{'$1','$2','$3'}},
+      case mnesia:select(job, [{MatchHead, Guards, [Result]}],1,read) of
         {[Key], _} -> 
           Job = mnesia:read(job, Key),
           mnesia:delete({job, Key}),
