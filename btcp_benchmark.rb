@@ -3,30 +3,36 @@ require 'socket'
 require 'timeout'
 require 'btcp_client'
 
-amount = 10_000
+amount = (ARGV.pop || 15_000).to_i
 
 threads = []
 
-threads << Thread.new do
-  client = BTCP::Client.new
-  started = Time.now
-  amount.times do |n|
-    client.add(n)
+5.times do
+  threads << Thread.new do
+    client = BTCP::Client.new
+    started = Time.now
+    amount.times do |n|
+      client.add(n)
+      sleep 0.3
+    end
+    ended = Time.now
+    taken = ended - started
+    puts "Added : #{amount} in #{taken} seconds = #{amount/taken}/s"
   end
-  ended = Time.now
-  taken = ended - started
-  puts "Added : #{amount} in #{taken} seconds = #{amount/taken}/s"
 end
 
-threads << Thread.new do 
-  client = BTCP::Client.new
-  started = Time.now
-  amount.times do |n|
-    client.reserve
+5.times do
+  threads << Thread.new do 
+    client = BTCP::Client.new
+    started = Time.now
+    amount.times do |n|
+      client.reserve
+      sleep 0.3
+    end
+    ended = Time.now
+    taken = ended - started
+    puts "Taken : #{amount} in #{taken} seconds = #{amount/taken}/s"
   end
-  ended = Time.now
-  taken = ended - started
-  puts "Taken : #{amount} in #{taken} seconds = #{amount/taken}/s"
 end
 
 threads.each {|t| t.join}
